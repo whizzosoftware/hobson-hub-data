@@ -18,9 +18,9 @@ import java.util.Collection;
  *
  * @author Dan Noguerol
  */
-public interface TelemetryFileContext {
+public interface DataStreamFileContext {
     /**
-     * Returns a raw telemetry File.
+     * Returns a raw data stream File.
      *
      * @param userId the user ID for the data stream
      * @param dataStreamId the data stream ID

@@ -9,8 +9,8 @@ package com.whizzosoftware.hobson.hub.data.db;
 
 import com.whizzosoftware.hobson.api.HobsonRuntimeException;
 import com.whizzosoftware.hobson.api.data.DataStreamField;
-import com.whizzosoftware.hobson.api.data.TelemetryInterval;
-import com.whizzosoftware.hobson.api.data.TemporalValueSet;
+import com.whizzosoftware.hobson.api.data.DataStreamInterval;
+import com.whizzosoftware.hobson.api.data.DataStreamValueSet;
 import com.whizzosoftware.hobson.api.util.Constants;
 import org.rrd4j.ConsolFun;
 import org.rrd4j.DsType;
@@ -28,9 +28,9 @@ import java.util.*;
  */
 public class RRD4JDataStreamDB implements DataStreamDB {
     @Override
-    synchronized public void addData(TelemetryFileContext provider, String dataStreamId, long now, Map<String, Object> data) {
+    synchronized public void addData(DataStreamFileContext provider, String dataStreamId, long now, Map<String, Object> data) {
         try {
-            File file = getTelemetryFile(provider, Constants.DEFAULT_USER, dataStreamId);
+            File file = getDataStreamFile(provider, Constants.DEFAULT_USER, dataStreamId);
             RrdDb db = new RrdDb(file.getAbsolutePath(), false);
             long t = now / 1000;
             Sample sample = db.createSample(t);
@@ -40,16 +40,16 @@ public class RRD4JDataStreamDB implements DataStreamDB {
             sample.update();
             db.close();
         } catch (IOException e) {
-            throw new HobsonRuntimeException("Error writing to telemetry file", e);
+            throw new HobsonRuntimeException("Error writing to data stream file", e);
         }
     }
 
     @Override
-    synchronized public List<TemporalValueSet> getData(TelemetryFileContext provider, String dataStreamId, long endTime, TelemetryInterval interval) {
+    synchronized public List<DataStreamValueSet> getData(DataStreamFileContext provider, String dataStreamId, long endTime, DataStreamInterval interval) {
         try {
             // TODO: this whole thing is pretty inefficient; refactor
-            Map<Long,TemporalValueSet> map = new TreeMap<>();
-            File file = getTelemetryFile(provider, Constants.DEFAULT_USER, dataStreamId);
+            Map<Long,DataStreamValueSet> map = new TreeMap<>();
+            File file = getDataStreamFile(provider, Constants.DEFAULT_USER, dataStreamId);
             if (file.exists()) {
                 RrdDb db = new RrdDb(file.getAbsolutePath(), true);
                 try {
@@ -62,9 +62,9 @@ public class RRD4JDataStreamDB implements DataStreamDB {
                         for (int i=0; i < values.length; i++) {
                             if (!Double.isNaN(values[i])) {
                                 long ts = timestamps[i] * 1000;
-                                TemporalValueSet tvs = map.get(ts);
+                                DataStreamValueSet tvs = map.get(ts);
                                 if (tvs == null) {
-                                    tvs = new TemporalValueSet(ts);
+                                    tvs = new DataStreamValueSet(ts);
                                     map.put(ts, tvs);
                                 }
                                 tvs.addValue(dsName, values[i]);
@@ -79,11 +79,11 @@ public class RRD4JDataStreamDB implements DataStreamDB {
             }
             return new ArrayList<>(map.values());
         } catch (IOException e) {
-            throw new HobsonRuntimeException("Error retrieving device telemetry", e);
+            throw new HobsonRuntimeException("Error retrieving device data stream", e);
         }
     }
 
-    private long calculateStartTime(long endTime, TelemetryInterval interval) {
+    private long calculateStartTime(long endTime, DataStreamInterval interval) {
         switch (interval) {
             case HOURS_1:
                 return endTime - (60 * 60L);
@@ -98,7 +98,7 @@ public class RRD4JDataStreamDB implements DataStreamDB {
         }
     }
 
-    private File getTelemetryFile(TelemetryFileContext provider, String userId, String dataStreamId) throws IOException {
+    private File getDataStreamFile(DataStreamFileContext provider, String userId, String dataStreamId) throws IOException {
         File file = provider.getFile(userId, dataStreamId);
         if (!file.exists()) {
             Collection<DataStreamField> list = provider.getFields(userId, dataStreamId);

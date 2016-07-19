@@ -10,18 +10,18 @@ package com.whizzosoftware.hobson.hub.data;
 import java.io.File;
 
 /**
- * An interface for classes that can provide telemetry data files.
+ * An interface for classes that can provide data stream data files.
  *
  * @author Dan Noguerol
  */
 public interface FileProvider {
     /**
-     * Returns a telemetry file.
+     * Returns a data stream file.
      *
      * @param userId the user ID associated with the file
      * @param dataStreamId the data stream ID associated with the file
      *
      * @return a File instance
      */
-    File getTelemetryDataFile(String userId, String dataStreamId);
+    File getDataStreamDataFile(String userId, String dataStreamId);
 }

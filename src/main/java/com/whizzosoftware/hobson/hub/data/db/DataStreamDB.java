@@ -7,14 +7,14 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.hub.data.db;
 
-import com.whizzosoftware.hobson.api.data.TelemetryInterval;
-import com.whizzosoftware.hobson.api.data.TemporalValueSet;
+import com.whizzosoftware.hobson.api.data.DataStreamInterval;
+import com.whizzosoftware.hobson.api.data.DataStreamValueSet;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * An interface implemented by classes that can store and retrieve data stream data (telemetry).
+ * An interface implemented by classes that can store and retrieve data stream data.
  *
  * @author Dan Noguerol
  */
@@ -24,9 +24,9 @@ public interface DataStreamDB {
      * @param context the context
      * @param dataStreamId the data stream ID
      * @param time the time at which the data occurred
-     * @param data a map of fieldId -> value
+     * @param data a map of fieldId to value
      */
-    void addData(TelemetryFileContext context, String dataStreamId, long time, Map<String, Object> data);
+    void addData(DataStreamFileContext context, String dataStreamId, long time, Map<String, Object> data);
 
     /**
      * Retrieves data stream data.
@@ -38,5 +38,5 @@ public interface DataStreamDB {
      *
      * @return a List of TemporalValueSet instances (empty if no data was found for the requested interval)
      */
-    List<TemporalValueSet> getData(TelemetryFileContext context, String dataStreamId, long endTime, TelemetryInterval interval);
+    List<DataStreamValueSet> getData(DataStreamFileContext context, String dataStreamId, long endTime, DataStreamInterval interval);
 }

@@ -34,7 +34,7 @@ import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private LocalTelemetryManager telemetryManager;
+    private LocalDataStreamManager dataStreamManager;
     private boolean firstRun = true;
 
     public DataPlugin(String pluginId) {
@@ -53,10 +53,10 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
 
     @Override
     public void onStartup(PropertyContainer config) {
-        this.telemetryManager = new LocalTelemetryManager(this, new MapDBDataStreamStore(getDataFile("dataStreams")), new RRD4JDataStreamDB());
+        this.dataStreamManager = new LocalDataStreamManager(this, new MapDBDataStreamStore(getDataFile("dataStreams")), new RRD4JDataStreamDB());
 
-        // add the local telemetry manager
-        getHubManager().getLocalManager().addTelemetryManager(telemetryManager);
+        // add the local data stream manager
+        getHubManager().getLocalManager().addDataStreamManager(dataStreamManager);
 
         // set the status to running
         setStatus(new PluginStatus(PluginStatus.Code.RUNNING));
@@ -81,7 +81,7 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
         // we don't want to run immediately since plugins may still be starting their devices
         if (!firstRun) {
             long now = System.currentTimeMillis();
-            for (DataStream ds : telemetryManager.getDataStreams(Constants.DEFAULT_USER)) {
+            for (DataStream ds : dataStreamManager.getDataStreams(Constants.DEFAULT_USER)) {
                 logger.trace("Processing data stream {}", ds.getId());
 
                 // build a map of variable values
@@ -94,8 +94,8 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
                     }
                 }
 
-                // add to telemetry manager
-                telemetryManager.addData(Constants.DEFAULT_USER, ds.getId(), now, data);
+                // add to data stream manager
+                dataStreamManager.addData(Constants.DEFAULT_USER, ds.getId(), now, data);
             }
         // defer to next run
         } else {
@@ -113,7 +113,7 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
     }
 
     @Override
-    public File getTelemetryDataFile(String userId, String dataStreamId) {
+    public File getDataStreamDataFile(String userId, String dataStreamId) {
         return getDataFile(userId + "-" + dataStreamId + ".rrdb");
     }
 }

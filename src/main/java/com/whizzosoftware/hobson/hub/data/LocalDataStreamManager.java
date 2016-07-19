@@ -11,7 +11,7 @@ import com.whizzosoftware.hobson.api.HobsonNotFoundException;
 import com.whizzosoftware.hobson.api.data.*;
 import com.whizzosoftware.hobson.api.variable.VariableContext;
 import com.whizzosoftware.hobson.hub.data.db.DataStreamDB;
-import com.whizzosoftware.hobson.hub.data.db.TelemetryFileContext;
+import com.whizzosoftware.hobson.hub.data.db.DataStreamFileContext;
 import com.whizzosoftware.hobson.hub.data.store.DataStreamStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,19 +21,19 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * A local (hub-based) implementation of TelemetryManager. It currently uses MapDB to store data stream meta data
+ * A local (hub-based) implementation of DataStreamManager. It currently uses MapDB to store data stream meta data
  * and RRD4J to store data stream data.
  *
  * @author Dan Noguerol
  */
-public class LocalTelemetryManager implements TelemetryManager, TelemetryFileContext {
-    private static final Logger logger = LoggerFactory.getLogger(LocalTelemetryManager.class);
+public class LocalDataStreamManager implements DataStreamManager, DataStreamFileContext {
+    private static final Logger logger = LoggerFactory.getLogger(LocalDataStreamManager.class);
 
     private FileProvider fileProvider;
     private DataStreamStore store;
     private DataStreamDB db;
 
-    public LocalTelemetryManager(FileProvider fileProvider, DataStreamStore store, DataStreamDB db) {
+    public LocalDataStreamManager(FileProvider fileProvider, DataStreamStore store, DataStreamDB db) {
         this.fileProvider = fileProvider;
         this.store = store;
         this.db = db;
@@ -52,10 +52,10 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     @Override
     public void deleteDataStream(String userId, String dataStreamId) {
         store.deleteDataStream(dataStreamId);
-        File f = fileProvider.getTelemetryDataFile(userId, dataStreamId);
+        File f = fileProvider.getDataStreamDataFile(userId, dataStreamId);
         if (f.exists()) {
             if (!f.delete()) {
-                logger.error("Unable to delete telemetry data file");
+                logger.error("Unable to delete data stream data file");
             }
         }
     }
@@ -82,7 +82,7 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     }
 
     @Override
-    public List<TemporalValueSet> getData(String userId, String dataStreamId, long endTime, TelemetryInterval interval) {
+    public List<DataStreamValueSet> getData(String userId, String dataStreamId, long endTime, DataStreamInterval interval) {
         DataStream ds = store.getDataStream(dataStreamId);
         if (ds != null) {
             return db.getData(this, dataStreamId, endTime, interval);
@@ -93,7 +93,7 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
 
     @Override
     public File getFile(String userId, String dataStreamId) throws IOException {
-        return fileProvider.getTelemetryDataFile(userId, dataStreamId);
+        return fileProvider.getDataStreamDataFile(userId, dataStreamId);
     }
 
     @Override

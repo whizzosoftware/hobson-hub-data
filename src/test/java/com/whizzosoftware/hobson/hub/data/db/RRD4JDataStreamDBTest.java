@@ -2,8 +2,8 @@ package com.whizzosoftware.hobson.hub.data.db;
 
 import com.whizzosoftware.hobson.api.data.DataStreamField;
 import com.whizzosoftware.hobson.api.device.DeviceContext;
-import com.whizzosoftware.hobson.api.data.TelemetryInterval;
-import com.whizzosoftware.hobson.api.data.TemporalValueSet;
+import com.whizzosoftware.hobson.api.data.DataStreamInterval;
+import com.whizzosoftware.hobson.api.data.DataStreamValueSet;
 import com.whizzosoftware.hobson.api.variable.VariableContext;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -23,7 +23,7 @@ public class RRD4JDataStreamDBTest {
         file.deleteOnExit();
         file.delete();
 
-        TelemetryFileContext ctx = new TelemetryFileContext() {
+        DataStreamFileContext ctx = new DataStreamFileContext() {
             @Override
             public File getFile(String userId, String dataStreamId) throws IOException {
                 return file;
@@ -48,10 +48,10 @@ public class RRD4JDataStreamDBTest {
         // adding second data point forces first to be recorded
         db.addData(ctx, "foo", now + 1000 * 60 * 5, data);
 
-        List<TemporalValueSet> vals = db.getData(ctx, "foo", now + 1000 * 60 * 60 * 2, TelemetryInterval.HOURS_4);
+        List<DataStreamValueSet> vals = db.getData(ctx, "foo", now + 1000 * 60 * 60 * 2, DataStreamInterval.HOURS_4);
 
         assertEquals(1, vals.size());
-        TemporalValueSet tvs = vals.get(0);
+        DataStreamValueSet tvs = vals.get(0);
         assertNotNull(tvs.getTime());
         assertEquals(35.0, tvs.getValues().get("foo1"));
         assertEquals(72.0, tvs.getValues().get("foo2"));
