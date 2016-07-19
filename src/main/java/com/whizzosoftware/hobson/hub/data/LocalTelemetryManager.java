@@ -7,10 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.hub.data;
 
-import com.whizzosoftware.hobson.api.telemetry.DataStream;
-import com.whizzosoftware.hobson.api.telemetry.TelemetryInterval;
-import com.whizzosoftware.hobson.api.telemetry.TelemetryManager;
-import com.whizzosoftware.hobson.api.telemetry.TemporalValueSet;
+import com.whizzosoftware.hobson.api.HobsonNotFoundException;
+import com.whizzosoftware.hobson.api.data.*;
 import com.whizzosoftware.hobson.api.variable.VariableContext;
 import com.whizzosoftware.hobson.hub.data.db.DataStreamDB;
 import com.whizzosoftware.hobson.hub.data.db.TelemetryFileContext;
@@ -43,8 +41,8 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     }
 
     @Override
-    public String createDataStream(String userId, String name, Collection<VariableContext> data) {
-        return store.saveDataStream(userId, UUID.randomUUID().toString(), name, data).getId();
+    public String createDataStream(String userId, String name, Collection<DataStreamField> fields, Set<String> tags) {
+        return store.saveDataStream(UUID.randomUUID().toString(), name, fields, tags).getId();
     }
 
     @Override
@@ -53,8 +51,8 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     }
 
     @Override
-    public DataStream getDataStream(String userId, String dataStreamId) {
-        return store.getDataStream(userId, dataStreamId);
+    public DataStream getDataStream(String dataStreamId) {
+        return store.getDataStream(dataStreamId);
     }
 
     @Override
@@ -64,13 +62,18 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     }
 
     @Override
-    public void addData(String userId, String dataStreamId, long now, Map<VariableContext, Object> data) {
-        db.addData(this, userId, dataStreamId, now, data);
+    public void addData(String dataStreamId, long now, Map<String, Object> data) {
+        db.addData(this, dataStreamId, now, data);
     }
 
     @Override
-    public List<TemporalValueSet> getData(String userId, String dataStreamId, long endTime, TelemetryInterval interval) {
-        return db.getData(this, userId, dataStreamId, endTime, interval);
+    public List<TemporalValueSet> getData(String dataStreamId, long endTime, TelemetryInterval interval) {
+        DataStream ds = store.getDataStream(dataStreamId);
+        if (ds != null) {
+            return db.getData(this, dataStreamId, endTime, interval);
+        } else {
+            throw new HobsonNotFoundException("Data stream does not exist");
+        }
     }
 
     @Override
@@ -79,8 +82,8 @@ public class LocalTelemetryManager implements TelemetryManager, TelemetryFileCon
     }
 
     @Override
-    public Collection<VariableContext> getVariables(String userId, String dataStreamId) {
-        DataStream ds = store.getDataStream(userId, dataStreamId);
-        return ds.getVariables();
+    public Collection<DataStreamField> getFields(String userId, String dataStreamId) {
+        DataStream ds = store.getDataStream(dataStreamId);
+        return ds.getFields();
     }
 }

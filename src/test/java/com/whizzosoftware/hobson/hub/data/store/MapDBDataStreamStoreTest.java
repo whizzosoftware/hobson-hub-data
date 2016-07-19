@@ -1,13 +1,15 @@
 package com.whizzosoftware.hobson.hub.data.store;
 
+import com.whizzosoftware.hobson.api.data.DataStreamField;
 import com.whizzosoftware.hobson.api.device.DeviceContext;
-import com.whizzosoftware.hobson.api.telemetry.DataStream;
+import com.whizzosoftware.hobson.api.data.DataStream;
 import com.whizzosoftware.hobson.api.variable.VariableContext;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class MapDBDataStreamStoreTest {
@@ -22,26 +24,33 @@ public class MapDBDataStreamStoreTest {
         assertEquals(0, s.getDataStreams("local").size());
 
         // create a new data stream
-        List<VariableContext> data = new ArrayList<>();
-        data.add(VariableContext.create(DeviceContext.createLocal("plugin1", "device1"), "on"));
-        data.add(VariableContext.create(DeviceContext.createLocal("plugin1", "device2"), "outTempF"));
-        data.add(VariableContext.create(DeviceContext.createLocal("plugin1", "device3"), "inTempF"));
-        DataStream ds = s.saveDataStream("local", "foo", "My Data Stream", data);
+        List<DataStreamField> data = new ArrayList<>();
+        data.add(new DataStreamField("id1", "field1", VariableContext.create(DeviceContext.createLocal("plugin1", "device1"), "on")));
+        data.add(new DataStreamField("id2", "field2", VariableContext.create(DeviceContext.createLocal("plugin1", "device2"), "outTempF")));
+        data.add(new DataStreamField("id3", "field3", VariableContext.create(DeviceContext.createLocal("plugin1", "device3"), "inTempF")));
+        HashSet<String> tags = new HashSet<>();
+        tags.add("tag1");
+        tags.add("tag2");
+        DataStream ds = s.saveDataStream("foo", "My Data Stream", data, tags);
         assertNotNull(ds);
         assertEquals("foo", ds.getId());
         assertEquals("My Data Stream", ds.getName());
-        assertNotNull(ds.getVariables());
-        assertEquals(3, ds.getVariables().size());
+        assertNotNull(ds.getFields());
+        assertEquals(3, ds.getFields().size());
 
         // re-open the database and try to restore the data stream
         s.close();
         s = new MapDBDataStreamStore(f);
-        ds = s.getDataStream("local", "foo");
+        ds = s.getDataStream("foo");
         assertNotNull(ds);
         assertEquals("foo", ds.getId());
         assertEquals("My Data Stream", ds.getName());
-        assertNotNull(ds.getVariables());
-        assertEquals(3, ds.getVariables().size());
+        assertNotNull(ds.getFields());
+        assertEquals(3, ds.getFields().size());
+        assertNotNull(ds.getTags());
+        assertEquals(2, ds.getTags().size());
+        assertTrue(ds.getTags().contains("tag1"));
+        assertTrue(ds.getTags().contains("tag2"));
 
         // get a list of data streams
         assertEquals(1, s.getDataStreams("local").size());

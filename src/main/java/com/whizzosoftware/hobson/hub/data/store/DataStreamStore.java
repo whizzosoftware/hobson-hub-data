@@ -7,10 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.hub.data.store;
 
-import com.whizzosoftware.hobson.api.telemetry.DataStream;
-import com.whizzosoftware.hobson.api.variable.VariableContext;
+import com.whizzosoftware.hobson.api.data.DataStream;
+import com.whizzosoftware.hobson.api.data.DataStreamField;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * An interface for classes that can store/retrieve data stream meta data.
@@ -21,14 +22,14 @@ public interface DataStreamStore {
     /**
      * Saves data stream information.
      *
-     * @param userId the user ID for the data stream
      * @param dataStreamId the data stream ID
      * @param name the name of the data stream
-     * @param data the list of variables associated with the data stream
+     * @param fields the list of fields associated with the data stream
+     * @param tags the list of tags associated with the data stream
      *
      * @return
      */
-    DataStream saveDataStream(String userId, String dataStreamId, String name, Collection<VariableContext> data);
+    DataStream saveDataStream(String dataStreamId, String name, Collection<DataStreamField> fields, Set<String> tags);
 
     /**
      * Retrieves a list of all available data streams.
@@ -42,10 +43,9 @@ public interface DataStreamStore {
     /**
      * Retrieves the details of a specific data stream.
      *
-     * @param userId the user ID for the data stream
      * @param dataStreamId the data stream ID
      *
      * @return
      */
-    DataStream getDataStream(String userId, String dataStreamId);
+    DataStream getDataStream(String dataStreamId);
 }

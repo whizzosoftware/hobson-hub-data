@@ -8,9 +8,10 @@
 package com.whizzosoftware.hobson.hub.data.db;
 
 import com.whizzosoftware.hobson.api.HobsonRuntimeException;
-import com.whizzosoftware.hobson.api.telemetry.TelemetryInterval;
-import com.whizzosoftware.hobson.api.telemetry.TemporalValueSet;
-import com.whizzosoftware.hobson.api.variable.VariableContext;
+import com.whizzosoftware.hobson.api.data.DataStreamField;
+import com.whizzosoftware.hobson.api.data.TelemetryInterval;
+import com.whizzosoftware.hobson.api.data.TemporalValueSet;
+import com.whizzosoftware.hobson.api.util.Constants;
 import org.rrd4j.ConsolFun;
 import org.rrd4j.DsType;
 import org.rrd4j.core.*;
@@ -27,14 +28,14 @@ import java.util.*;
  */
 public class RRD4JDataStreamDB implements DataStreamDB {
     @Override
-    synchronized public void addData(TelemetryFileContext provider, String userId, String dataStreamId, long now, Map<VariableContext, Object> data) {
+    synchronized public void addData(TelemetryFileContext provider, String dataStreamId, long now, Map<String, Object> data) {
         try {
-            File file = getTelemetryFile(provider, userId, dataStreamId);
+            File file = getTelemetryFile(provider, Constants.DEFAULT_USER, dataStreamId);
             RrdDb db = new RrdDb(file.getAbsolutePath(), false);
             long t = now / 1000;
             Sample sample = db.createSample(t);
-            for (VariableContext vctx : data.keySet()) {
-                sample.setValue(vctx.getName(), Double.parseDouble(data.get(vctx).toString()));
+            for (String fieldId : data.keySet()) {
+                sample.setValue(fieldId, Double.parseDouble(data.get(fieldId).toString()));
             }
             sample.update();
             db.close();
@@ -44,11 +45,11 @@ public class RRD4JDataStreamDB implements DataStreamDB {
     }
 
     @Override
-    synchronized public List<TemporalValueSet> getData(TelemetryFileContext provider, String userId, String dataStreamId, long endTime, TelemetryInterval interval) {
+    synchronized public List<TemporalValueSet> getData(TelemetryFileContext provider, String dataStreamId, long endTime, TelemetryInterval interval) {
         try {
             // TODO: this whole thing is pretty inefficient; refactor
             Map<Long,TemporalValueSet> map = new TreeMap<>();
-            File file = getTelemetryFile(provider, userId, dataStreamId);
+            File file = getTelemetryFile(provider, Constants.DEFAULT_USER, dataStreamId);
             if (file.exists()) {
                 RrdDb db = new RrdDb(file.getAbsolutePath(), true);
                 try {
@@ -71,7 +72,9 @@ public class RRD4JDataStreamDB implements DataStreamDB {
                         }
                     }
                 } finally {
-                    db.close();
+                    try {
+                        db.close();
+                    } catch (IOException ignored) {}
                 }
             }
             return new ArrayList<>(map.values());
@@ -80,7 +83,7 @@ public class RRD4JDataStreamDB implements DataStreamDB {
         }
     }
 
-    protected long calculateStartTime(long endTime, TelemetryInterval interval) {
+    private long calculateStartTime(long endTime, TelemetryInterval interval) {
         switch (interval) {
             case HOURS_1:
                 return endTime - (60 * 60L);
@@ -95,15 +98,15 @@ public class RRD4JDataStreamDB implements DataStreamDB {
         }
     }
 
-    protected File getTelemetryFile(TelemetryFileContext provider, String userId, String dataStreamId) throws IOException {
+    private File getTelemetryFile(TelemetryFileContext provider, String userId, String dataStreamId) throws IOException {
         File file = provider.getFile(userId, dataStreamId);
         if (!file.exists()) {
-            Collection<VariableContext> list = provider.getVariables(userId, dataStreamId);
+            Collection<DataStreamField> list = provider.getFields(userId, dataStreamId);
             if (list != null) {
                 RrdDef rrdDef = new RrdDef(file.getAbsolutePath(), Util.getTimestamp() - 1, 300); // 5 minute step
                 rrdDef.setVersion(2);
-                for (VariableContext ctx : list) {
-                    rrdDef.addDatasource(ctx.getName(), DsType.GAUGE, 300, Double.NaN, Double.NaN);
+                for (DataStreamField ctx : list) {
+                    rrdDef.addDatasource(ctx.getId(), DsType.GAUGE, 300, Double.NaN, Double.NaN);
                 }
                 rrdDef.addArchive(AVERAGE, 0.5, 1, 2016); // 2016 = 7 days
                 RrdDb db = new RrdDb(rrdDef);

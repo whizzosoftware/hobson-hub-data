@@ -12,10 +12,11 @@ import java.lang.Override;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.whizzosoftware.hobson.api.data.DataStreamField;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
-import com.whizzosoftware.hobson.api.telemetry.DataStream;
-import com.whizzosoftware.hobson.api.variable.VariableContext;
+import com.whizzosoftware.hobson.api.data.DataStream;
+import com.whizzosoftware.hobson.api.util.Constants;
 import com.whizzosoftware.hobson.api.variable.VariableNotFoundException;
 import com.whizzosoftware.hobson.hub.data.db.RRD4JDataStreamDB;
 import com.whizzosoftware.hobson.hub.data.store.MapDBDataStreamStore;
@@ -80,21 +81,21 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
         // we don't want to run immediately since plugins may still be starting their devices
         if (!firstRun) {
             long now = System.currentTimeMillis();
-            for (DataStream ds : telemetryManager.getDataStreams(getContext().getUserId())) {
+            for (DataStream ds : telemetryManager.getDataStreams(Constants.DEFAULT_USER)) {
                 logger.trace("Processing data stream {}", ds.getId());
 
                 // build a map of variable values
-                Map<VariableContext, Object> data = new HashMap<>();
-                for (VariableContext vctx : ds.getVariables()) {
+                Map<String, Object> data = new HashMap<>();
+                for (DataStreamField df : ds.getFields()) {
                     try {
-                        data.put(vctx, getVariableManager().getVariable(vctx).getValue());
+                        data.put(df.getId(), getVariableManager().getVariable(df.getVariable()).getValue());
                     } catch (VariableNotFoundException e) {
-                        logger.error("Skipping unpublished variable " + vctx + " in data stream " + ds.getId(), e);
+                        logger.error("Skipping unpublished variable " + df.getVariable() + " in data stream " + ds.getId(), e);
                     }
                 }
 
                 // add to telemetry manager
-                telemetryManager.addData(getContext().getUserId(), ds.getId(), now, data);
+                telemetryManager.addData(ds.getId(), now, data);
             }
         // defer to next run
         } else {

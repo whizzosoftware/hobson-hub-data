@@ -7,7 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.hub.data.db;
 
-import com.whizzosoftware.hobson.api.variable.VariableContext;
+import com.whizzosoftware.hobson.api.data.DataStreamField;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public interface TelemetryFileContext {
      * @param userId the user ID for the data stream
      * @param dataStreamId the data stream ID
      *
-     * @return a Collection of VariableContext instances
+     * @return a Collection of DataStreamField instances
      */
-    Collection<VariableContext> getVariables(String userId, String dataStreamId);
+    Collection<DataStreamField> getFields(String userId, String dataStreamId);
 }
