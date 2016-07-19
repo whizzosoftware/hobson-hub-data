@@ -95,7 +95,7 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
                 }
 
                 // add to telemetry manager
-                telemetryManager.addData(ds.getId(), now, data);
+                telemetryManager.addData(Constants.DEFAULT_USER, ds.getId(), now, data);
             }
         // defer to next run
         } else {

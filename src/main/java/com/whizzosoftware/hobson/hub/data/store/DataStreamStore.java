@@ -20,6 +20,13 @@ import java.util.Set;
  */
 public interface DataStreamStore {
     /**
+     * Deletes an existing data stream.
+     *
+     * @param dataStreamId the data stream ID
+     */
+    void deleteDataStream(String dataStreamId);
+
+    /**
      * Saves data stream information.
      *
      * @param dataStreamId the data stream ID

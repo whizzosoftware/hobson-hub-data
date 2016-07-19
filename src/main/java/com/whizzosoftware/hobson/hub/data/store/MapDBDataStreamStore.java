@@ -47,6 +47,18 @@ public class MapDBDataStreamStore implements DataStreamStore {
     }
 
     @Override
+    public void deleteDataStream(String dataStreamId) {
+        ClassLoader old = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+            logger.debug("Deleting data stream: {}", dataStreamId);
+            persister.deleteDataStream(new MapDBCollectionPersistenceContext(db), dataStreamId);
+        } finally {
+            Thread.currentThread().setContextClassLoader(old);
+        }
+    }
+
+    @Override
     public DataStream saveDataStream(String dataStreamId, String name, Collection<DataStreamField> fields, Set<String> tags) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
