@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.whizzosoftware.hobson.hub</groupId>
     <artifactId>hobson-hub-data</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Hobson Data Plugin</name>
     <description>Provides the ability to collect device data and store it locally on the Hobson Hub.</description>
@@ -111,7 +111,7 @@
     <scm>
         <connection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-data.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-data.git</developerConnection>
-        <tag>hobson-hub-data-0.1.0</tag>
+        <tag>HEAD</tag>
     </scm>
     <distributionManagement>
         <repository>
