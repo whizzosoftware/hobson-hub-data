@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.whizzosoftware.hobson.hub</groupId>
     <artifactId>hobson-hub-data</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Hobson Data Plugin</name>
     <description>Provides the ability to collect device data and store it locally on the Hobson Hub.</description>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-api</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -69,7 +69,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>org.slf4j,org.joda.time.*,org.mapdb.*,com.whizzosoftware.hobson.api.*;version="[0.9.0,0.10)</Import-Package>
+                        <Import-Package>org.slf4j,org.joda.time.*,org.mapdb.*,com.whizzosoftware.hobson.api.*;version="[0.10.0,0.11)</Import-Package>
                         <Embed-Dependency>rrd4j;scope=compile|runtime</Embed-Dependency>
                         <Bundle-Activator>com.whizzosoftware.hobson.api.osgi.activator.HobsonBundleActivator</Bundle-Activator>
                         <Provide-Capability>hobson.plugin=com.whizzosoftware.hobson.hub.data.DataPlugin</Provide-Capability>

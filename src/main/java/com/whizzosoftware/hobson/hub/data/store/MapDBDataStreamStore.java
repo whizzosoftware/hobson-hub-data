@@ -1,13 +1,16 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.hub.data.store;
 
 import com.whizzosoftware.hobson.api.data.DataStreamField;
+import com.whizzosoftware.hobson.api.hub.HubContext;
 import com.whizzosoftware.hobson.api.persist.CollectionPersister;
 import com.whizzosoftware.hobson.api.persist.ContextPathIdProvider;
 import com.whizzosoftware.hobson.api.persist.IdProvider;
@@ -42,24 +45,24 @@ public class MapDBDataStreamStore implements DataStreamStore {
         }
     }
 
-    public void close() {
+    void close() {
         db.close();
     }
 
     @Override
-    public void deleteDataStream(String dataStreamId) {
+    public void deleteDataStream(HubContext hctx, String dataStreamId) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
             logger.debug("Deleting data stream: {}", dataStreamId);
-            persister.deleteDataStream(new MapDBCollectionPersistenceContext(db), dataStreamId);
+            persister.deleteDataStream(new MapDBCollectionPersistenceContext(db), hctx, dataStreamId);
         } finally {
             Thread.currentThread().setContextClassLoader(old);
         }
     }
 
     @Override
-    public DataStream saveDataStream(String dataStreamId, String name, Collection<DataStreamField> fields, Set<String> tags) {
+    public DataStream saveDataStream(HubContext hctx, String dataStreamId, String name, Collection<DataStreamField> fields, Set<String> tags) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
@@ -76,7 +79,7 @@ public class MapDBDataStreamStore implements DataStreamStore {
             }
 
             DataStream ds = new DataStream(dataStreamId, name, newFields, tags);
-            persister.saveDataStream(new MapDBCollectionPersistenceContext(db), ds);
+            persister.saveDataStream(new MapDBCollectionPersistenceContext(db), hctx, ds, true);
             return ds;
         } finally {
             Thread.currentThread().setContextClassLoader(old);
@@ -84,14 +87,14 @@ public class MapDBDataStreamStore implements DataStreamStore {
     }
 
     @Override
-    public Collection<DataStream> getDataStreams(String userId) {
+    public Collection<DataStream> getDataStreams(HubContext ctx) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
             List<DataStream> results = new ArrayList<>();
-            MapDBCollectionPersistenceContext ctx = new MapDBCollectionPersistenceContext(db);
-            for (Object o : ctx.getSet(idProvider.createDataStreamsId())) {
-                results.add(persister.restoreDataStream(ctx, o.toString()));
+            MapDBCollectionPersistenceContext pctx = new MapDBCollectionPersistenceContext(db);
+            for (Object o : pctx.getSet(idProvider.createDataStreamsId(ctx).getId())) {
+                results.add(persister.restoreDataStream(pctx, ctx, o.toString()));
             }
             return results;
         } finally {
@@ -100,12 +103,12 @@ public class MapDBDataStreamStore implements DataStreamStore {
     }
 
     @Override
-    public DataStream getDataStream(String dataStreamId) {
+    public DataStream getDataStream(HubContext ctx, String dataStreamId) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-            MapDBCollectionPersistenceContext ctx = new MapDBCollectionPersistenceContext(db);
-            return persister.restoreDataStream(ctx, dataStreamId);
+            MapDBCollectionPersistenceContext pctx = new MapDBCollectionPersistenceContext(db);
+            return persister.restoreDataStream(pctx, ctx, dataStreamId);
         } finally {
             Thread.currentThread().setContextClassLoader(old);
         }

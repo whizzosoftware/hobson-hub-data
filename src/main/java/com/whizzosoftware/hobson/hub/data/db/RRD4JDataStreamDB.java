@@ -1,17 +1,19 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.hub.data.db;
 
 import com.whizzosoftware.hobson.api.HobsonRuntimeException;
 import com.whizzosoftware.hobson.api.data.DataStreamField;
 import com.whizzosoftware.hobson.api.data.DataStreamInterval;
 import com.whizzosoftware.hobson.api.data.DataStreamValueSet;
-import com.whizzosoftware.hobson.api.util.Constants;
+import com.whizzosoftware.hobson.api.hub.HubContext;
 import org.rrd4j.ConsolFun;
 import org.rrd4j.DsType;
 import org.rrd4j.core.*;
@@ -30,7 +32,7 @@ public class RRD4JDataStreamDB implements DataStreamDB {
     @Override
     synchronized public void addData(DataStreamFileContext provider, String dataStreamId, long now, Map<String, Object> data) {
         try {
-            File file = getDataStreamFile(provider, Constants.DEFAULT_USER, dataStreamId);
+            File file = getDataStreamFile(provider, HubContext.createLocal(), dataStreamId);
             RrdDb db = new RrdDb(file.getAbsolutePath(), false);
             long t = now / 1000;
             Sample sample = db.createSample(t);
@@ -49,7 +51,7 @@ public class RRD4JDataStreamDB implements DataStreamDB {
         try {
             // TODO: this whole thing is pretty inefficient; refactor
             Map<Long,DataStreamValueSet> map = new TreeMap<>();
-            File file = getDataStreamFile(provider, Constants.DEFAULT_USER, dataStreamId);
+            File file = getDataStreamFile(provider, HubContext.createLocal(), dataStreamId);
             if (file.exists()) {
                 RrdDb db = new RrdDb(file.getAbsolutePath(), true);
                 try {
@@ -98,15 +100,15 @@ public class RRD4JDataStreamDB implements DataStreamDB {
         }
     }
 
-    private File getDataStreamFile(DataStreamFileContext provider, String userId, String dataStreamId) throws IOException {
-        File file = provider.getFile(userId, dataStreamId);
+    private File getDataStreamFile(DataStreamFileContext provider, HubContext ctx, String dataStreamId) throws IOException {
+        File file = provider.getFile(ctx, dataStreamId);
         if (!file.exists()) {
-            Collection<DataStreamField> list = provider.getFields(userId, dataStreamId);
+            Collection<DataStreamField> list = provider.getFields(ctx, dataStreamId);
             if (list != null) {
                 RrdDef rrdDef = new RrdDef(file.getAbsolutePath(), Util.getTimestamp() - 1, 300); // 5 minute step
                 rrdDef.setVersion(2);
-                for (DataStreamField ctx : list) {
-                    rrdDef.addDatasource(ctx.getId(), DsType.GAUGE, 300, Double.NaN, Double.NaN);
+                for (DataStreamField dsf : list) {
+                    rrdDef.addDatasource(dsf.getId(), DsType.GAUGE, 300, Double.NaN, Double.NaN);
                 }
                 rrdDef.addArchive(AVERAGE, 0.5, 1, 2016); // 2016 = 7 days
                 RrdDb db = new RrdDb(rrdDef);

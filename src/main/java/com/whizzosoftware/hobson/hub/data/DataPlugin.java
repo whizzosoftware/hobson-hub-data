@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.hub.data;
 
 import java.io.File;
@@ -13,11 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.whizzosoftware.hobson.api.data.DataStreamField;
+import com.whizzosoftware.hobson.api.hub.HubContext;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.api.data.DataStream;
-import com.whizzosoftware.hobson.api.util.Constants;
-import com.whizzosoftware.hobson.api.variable.VariableNotFoundException;
+import com.whizzosoftware.hobson.api.variable.DeviceVariableContext;
 import com.whizzosoftware.hobson.hub.data.db.RRD4JDataStreamDB;
 import com.whizzosoftware.hobson.hub.data.store.MapDBDataStreamStore;
 import org.slf4j.Logger;
@@ -37,8 +39,8 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
     private LocalDataStreamManager dataStreamManager;
     private boolean firstRun = true;
 
-    public DataPlugin(String pluginId) {
-        super(pluginId);
+    public DataPlugin(String pluginId, String version, String description) {
+        super(pluginId, version, description);
     }
 
     /**
@@ -60,6 +62,8 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
 
         // set the status to running
         setStatus(new PluginStatus(PluginStatus.Code.RUNNING));
+
+        logger.info("Data plugin started!");
     }
 
     @Override
@@ -67,7 +71,11 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
     }
 
     @Override
-    protected TypedProperty[] createSupportedProperties() {
+    public void onPluginConfigurationUpdate(PropertyContainer config) {
+    }
+
+    @Override
+    protected TypedProperty[] getConfigurationPropertyTypes() {
         return null;
     }
 
@@ -81,21 +89,18 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
         // we don't want to run immediately since plugins may still be starting their devices
         if (!firstRun) {
             long now = System.currentTimeMillis();
-            for (DataStream ds : dataStreamManager.getDataStreams(Constants.DEFAULT_USER)) {
+            for (DataStream ds : dataStreamManager.getDataStreams(HubContext.createLocal())) {
                 logger.trace("Processing data stream {}", ds.getId());
 
                 // build a map of variable values
                 Map<String, Object> data = new HashMap<>();
                 for (DataStreamField df : ds.getFields()) {
-                    try {
-                        data.put(df.getId(), getVariableManager().getVariable(df.getVariable()).getValue());
-                    } catch (VariableNotFoundException e) {
-                        logger.error("Skipping unpublished variable " + df.getVariable() + " in data stream " + ds.getId(), e);
-                    }
+                    DeviceVariableContext dvctx = df.getVariable();
+                    data.put(df.getId(), getDeviceVariableState(dvctx).getValue());
                 }
 
                 // add to data stream manager
-                dataStreamManager.addData(Constants.DEFAULT_USER, ds.getId(), now, data);
+                dataStreamManager.addData(HubContext.createLocal(), ds.getId(), now, data);
             }
         // defer to next run
         } else {
@@ -103,17 +108,8 @@ public class DataPlugin extends AbstractHobsonPlugin implements FileProvider {
         }
     }
 
-    /**
-     * Callback method when the plugin's configuration changes.
-     *
-     * @param config the new configuration
-     */
     @Override
-    public void onPluginConfigurationUpdate(PropertyContainer config) {
-    }
-
-    @Override
-    public File getDataStreamDataFile(String userId, String dataStreamId) {
-        return getDataFile(userId + "-" + dataStreamId + ".rrdb");
+    public File getDataStreamDataFile(HubContext ctx, String dataStreamId) {
+        return getDataFile(ctx.getHubId() + "-" + dataStreamId + ".rrdb");
     }
 }

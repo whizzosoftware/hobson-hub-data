@@ -4,7 +4,8 @@ import com.whizzosoftware.hobson.api.data.DataStreamField;
 import com.whizzosoftware.hobson.api.device.DeviceContext;
 import com.whizzosoftware.hobson.api.data.DataStreamInterval;
 import com.whizzosoftware.hobson.api.data.DataStreamValueSet;
-import com.whizzosoftware.hobson.api.variable.VariableContext;
+import com.whizzosoftware.hobson.api.hub.HubContext;
+import com.whizzosoftware.hobson.api.variable.DeviceVariableContext;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -16,8 +17,8 @@ public class RRD4JDataStreamDBTest {
     @Test
     public void testAddData() throws Exception {
         RRD4JDataStreamDB db = new RRD4JDataStreamDB();
-        final VariableContext vctx1 = VariableContext.create(DeviceContext.createLocal("plugin1", "device1"), "outTempF");
-        final VariableContext vctx2 = VariableContext.create(DeviceContext.createLocal("plugin1", "device2"), "inTempF");
+        final DeviceVariableContext vctx1 = DeviceVariableContext.create(DeviceContext.createLocal("plugin1", "device1"), "outTempF");
+        final DeviceVariableContext vctx2 = DeviceVariableContext.create(DeviceContext.createLocal("plugin1", "device2"), "inTempF");
 
         final File file = File.createTempFile("ds-", ".rrdb");
         file.deleteOnExit();
@@ -25,12 +26,12 @@ public class RRD4JDataStreamDBTest {
 
         DataStreamFileContext ctx = new DataStreamFileContext() {
             @Override
-            public File getFile(String userId, String dataStreamId) throws IOException {
+            public File getFile(HubContext ctx, String dataStreamId) throws IOException {
                 return file;
             }
 
             @Override
-            public Collection<DataStreamField> getFields(String userId, String dataStreamId) {
+            public Collection<DataStreamField> getFields(HubContext ctx, String dataStreamId) {
                 List<DataStreamField> list = new ArrayList<>();
                 list.add(new DataStreamField("foo1", "field1", vctx1));
                 list.add(new DataStreamField("foo2", "field2", vctx2));
